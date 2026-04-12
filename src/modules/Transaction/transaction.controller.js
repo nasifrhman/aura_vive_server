@@ -3,72 +3,96 @@ const Transaction = require("./transaction.model");
 const catchAsync = require("../../helpers/catchAsync");
 const bookingModel = require("../Booking/booking.model");
 const { getUserById } = require("../Auth/auth.service");
+const userModel = require("../User/user.model");
 
 
 
 const bookController = catchAsync(async (req, res) => {
-  const userId = req.User._id;
 
   const {
     service,
-    provider,
+    partner,
     date,
     isOneTime,
     servicePrice,
     totalPrice,
     addons,
-    startTime,
-    endTime,
   } = req.body;
 
+  const userId = req.User._id;
   const user = await getUserById(userId);
-  const { email, name } = user;
 
+  const tx_ref = `txn_${Date.now()}_${userId}`;
 
-  const tx_ref = "txn_" + Date.now();
+  // 🔹 Commission Calculation
+  const commissionRate = 0.10; // 10%
+  const grossAmount = Number(totalPrice);
+  const commission = grossAmount * commissionRate;
+  const netAmount = grossAmount - commission;
 
-  // ✅ STEP 1: Create Booking FIRST
-  const booking = await bookingModel.create({
-    user: userId,
-    service,
-    provider,
-    date,
-    isOneTime,
-    servicePrice,
-    totalPrice,
-    addons,
-    startTime,
-    endTime,
-    status: "pending",
-  });
+  // 🔹 Get partner bank info
+  const partnerData = await userModel.findById(partner);
 
-  // ✅ STEP 2: Create Transaction
-  const transaction = await Transaction.create({
+  if (!partnerData) {
+    return res.status(400).json({
+      message: "Partner not found",
+    });
+  }
+
+  // ✅ Create Transaction
+  await Transaction.create({
     tx_ref,
     user: userId,
-    booking: booking._id,
+    partner,
     service,
-    provider,
-    grossAmount: totalPrice,
-    currency: "NGN",
+
+    user_email: user.email,
+
+    amount: grossAmount,
+    currency: "USD",
+
+    gross_amount: grossAmount,
+    commission,
+    net_amount: netAmount,
+
+    account_name: partnerData.account_name || "",
+    account_number: partnerData.account_number || "",
+
+    payout_status: "hold", // until service completed
+
     status: "pending",
+
+    booking_data: {
+      user: userId,
+      service,
+      provider: partner,
+      date,
+      isOneTime,
+      servicePrice,
+      totalPrice,
+      addons,
+    },
   });
 
-  // ✅ STEP 3: Initialize Payment
+  // 🔥 Flutterwave Init
   const response = await axios.post(
     "https://api.flutterwave.com/v3/payments",
     {
       tx_ref,
-      amount: totalPrice,
-      currency: "NGN",
+      amount: grossAmount,
+      currency: "USD",
       redirect_url: process.env.FLW_SUCCESS_URL,
+
       payment_options: "card,banktransfer",
-      customer: { email, name },
+
+      customer: {
+        email: user.email,
+        name: user.fullName,
+      },
     },
     {
       headers: {
         Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
-        "Content-Type": "application/json",
       },
     }
   );
@@ -77,56 +101,6 @@ const bookController = catchAsync(async (req, res) => {
     paymentLink: response.data.data.link,
     tx_ref,
   });
-});
-
-
-
-const cancelBooking = catchAsync(async (req, res) => {
-  const { bookingId } = req.params;
-  const userId = req.User._id;
-
-  const booking = await bookingModel.findById(bookingId).populate("transaction");
-  if (!booking) return res.status(404).json({ error: "Booking not found" });
-  if (booking.user.toString() !== userId) {
-    return res.status(403).json({ error: "Not allowed" });
-  }
-
-  // Only pending or upcoming bookings can be canceled
-  if (booking.status === "completed")
-    return res.status(400).json({ error: "Cannot cancel completed booking" });
-
-  // Update booking
-  booking.status = "cancelled";
-  booking.paymentStatus =
-    booking.paymentStatus === "paid" ? "refunded" : booking.paymentStatus;
-
-  await booking.save();
-
-  // Refund payment if digital payment
-  if (booking.paymentStatus === "refunded" && booking.transaction?.transaction_id) {
-    try {
-      await axios.post(
-        `https://api.flutterwave.com/v3/transactions/${booking.transaction.transaction_id}/refund`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
-          },
-        }
-      );
-    } catch (err) {
-      console.error("Refund failed:", err.response?.data || err.message);
-    }
-  }
-
-  // Update transaction status
-  if (booking.transaction) {
-    booking.transaction.status = "cancelled";
-    booking.transaction.paymentStatus = booking.paymentStatus;
-    await booking.transaction.save();
-  }
-
-  res.json({ message: "Booking cancelled successfully" });
 });
 
 
@@ -178,37 +152,83 @@ const initializePayment = async (req, res) => {
 };
 
 const verifyPayment = async (req, res) => {
+
   const { transaction_id } = req.query;
 
   if (!transaction_id)
     return res.send("Transaction missing");
 
-  try {
+  const response = await axios.get(
+    `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`,
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+      },
+    }
+  );
 
-    const response = await axios.get(
-      `https://api.flutterwave.com/v3/transactions/${transaction_id}/verify`,
-      {
-        headers: {
-          Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
-        },
-      }
-    );
+  const payment = response.data.data;
 
-    const payment = response.data.data;
+  await Transaction.findOneAndUpdate(
+    { tx_ref: payment.tx_ref },
+    {
+      transaction_id: payment.id,
+      status:
+        payment.status === "successful"
+          ? "successful"
+          : "failed",
+    }
+  );
 
-    await Transaction.findOneAndUpdate(
-      { tx_ref: payment.tx_ref },
-      {
-        status: payment.status,
-        transaction_id: payment.id,
-      }
-    );
-
-    res.send("✅ Payment Processing...");
-  } catch (error) {
-    res.status(500).send("Verification failed");
-  }
+  res.send("Payment verification complete");
 };
+
+const cancelBooking = catchAsync(async (req, res) => {
+  const { bookingId } = req.params;
+  const userId = req.user_id;
+
+  const booking = await bookingModel.findById(bookingId).populate("transaction");
+  if (!booking) return res.status(404).json({ error: "Booking not found" });
+  if (!booking.user.equals(userId)) return res.status(403).json({ error: "Not allowed" });
+
+  // Only pending or upcoming bookings can be canceled
+  if (booking.status === "completed")
+    return res.status(400).json({ error: "Cannot cancel completed booking" });
+
+  // Update booking
+  booking.status = "cancelled";
+  booking.paymentStatus =
+    booking.paymentStatus === "paid" ? "refunded" : booking.paymentStatus;
+
+  await booking.save();
+
+  // Refund payment if digital payment
+  if (booking.paymentStatus === "refunded" && booking.transaction?.transaction_id) {
+    try {
+      await axios.post(
+        `https://api.flutterwave.com/v3/transactions/${booking.transaction.transaction_id}/refund`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+          },
+        }
+      );
+    } catch (err) {
+      console.error("Refund failed:", err.response?.data || err.message);
+    }
+  }
+
+  // Update transaction status
+  if (booking.transaction) {
+    booking.transaction.status = "cancelled";
+    booking.transaction.paymentStatus = booking.paymentStatus;
+    await booking.transaction.save();
+  }
+
+  res.json({ message: "Booking cancelled successfully" });
+});
+
 
 module.exports = {
   initializePayment,

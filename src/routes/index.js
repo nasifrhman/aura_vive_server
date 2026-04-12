@@ -23,6 +23,7 @@ const partnerRoutes = require('../modules/Partner/partner.route');
 const adminRoutes = require('../modules/Admin/admin.route');
 const transactionRoutes = require('../modules/Transaction/transaction.route');
 const homeRoutes = require('../modules/Home/home.route');
+const bankRoutes = require('../modules/Bank/bank.route');
 
 
 const moduleRoutes = [
@@ -117,6 +118,10 @@ const moduleRoutes = [
   {
     path : '/home',
     route : homeRoutes
+  },
+  {
+    path : '/bank',
+    route : bankRoutes
   }
 ];
 

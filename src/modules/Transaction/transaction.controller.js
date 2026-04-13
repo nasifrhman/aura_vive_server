@@ -4,6 +4,11 @@ const catchAsync = require("../../helpers/catchAsync");
 const bookingModel = require("../Booking/booking.model");
 const { getUserById } = require("../Auth/auth.service");
 const userModel = require("../User/user.model");
+const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService } = require("./transaction.service");
+const { default: status } = require("http-status");
+const response = require("../../helpers/response");
+const generate4DigitPin = require("../../helpers/generatepin");
+
 
 
 
@@ -38,6 +43,8 @@ const bookController = catchAsync(async (req, res) => {
       message: "Partner not found",
     });
   }
+  
+    const pin = generate4DigitPin();
 
   // ✅ Create Transaction
   await Transaction.create({
@@ -55,10 +62,10 @@ const bookController = catchAsync(async (req, res) => {
     commission,
     net_amount: netAmount,
 
-    account_name: partnerData.account_name || "",
-    account_number: partnerData.account_number || "",
+    // account_name: partnerData.account_name || "",
+    // account_number: partnerData.account_number || "",
 
-    payout_status: "hold", // until service completed
+    payout_status: "pending", // until service completed
 
     status: "pending",
 
@@ -71,6 +78,7 @@ const bookController = catchAsync(async (req, res) => {
       servicePrice,
       totalPrice,
       addons,
+      pin
     },
   });
 
@@ -183,9 +191,115 @@ const verifyPayment = async (req, res) => {
   res.send("Payment verification complete");
 };
 
+
+const allTransactionController = catchAsync(async (req, res) => {
+
+  const option = {
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 10,
+
+    month: req.query.month ? Number(req.query.month) : undefined,
+    year: req.query.year ? Number(req.query.year) : undefined,
+
+    payment_method: req.query.payment_method || undefined,
+    search: req.query.search || undefined,
+  };
+
+  const transactions = await getAllTransactions(option);
+
+  return res.status(status.OK).json(
+    response({
+      status: 'success',
+      statusCode: status.OK,
+      type: "Transaction",
+      message: "Transaction fetched successfully",
+      data: transactions,
+    })
+  );
+});
+
+
+
+
+const pendingPayoutController = catchAsync(async (req, res) => {
+
+  const option = {
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 10,
+
+    month: req.query.month ? Number(req.query.month) : undefined,
+    year: req.query.year ? Number(req.query.year) : undefined,
+
+    status: req.query.status,
+    search: req.query.search,
+  };
+
+  const transactions = await getPendingPayoutService(option);
+
+  return res.status(status.OK).json(
+    response({
+      status: 'success',
+      statusCode: status.OK,
+      type: "Transaction",
+      message: "Transaction fetched successfully",
+      data: transactions,
+    })
+  );
+});
+
+const completePayoutController = catchAsync(async (req, res) => {
+
+  const option = {
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 10,
+
+    month: req.query.month ? Number(req.query.month) : undefined,
+    year: req.query.year ? Number(req.query.year) : undefined,
+
+    status: req.query.status,
+    search: req.query.search,
+  };
+
+  const transactions = await getcompletePayoutService(option);
+
+  return res.status(status.OK).json(
+    response({
+      status: 'success',
+      statusCode: status.OK,
+      type: "Transaction",
+      message: "Transaction fetched successfully",
+      data: transactions,
+    })
+  );
+});
+
+
+
+const payoutStatusUpdateController = catchAsync(async (req, res) => {
+
+  const { partnerId, month, year, status } = req.body;
+
+  const result = await payoutStatusUpdateService({
+    partnerId,
+    month,
+    year,
+    status
+  });
+
+  return res.status(200).json(
+    response({
+      status: "success",
+      message: "Monthly payout completed",
+      data: result
+    })
+  );
+});
+
+
+
 const cancelBooking = catchAsync(async (req, res) => {
   const { bookingId } = req.params;
-  const userId = req.user_id;
+  const userId = req.User._id;
 
   const booking = await bookingModel.findById(bookingId).populate("transaction");
   if (!booking) return res.status(404).json({ error: "Booking not found" });
@@ -230,9 +344,14 @@ const cancelBooking = catchAsync(async (req, res) => {
 });
 
 
+
 module.exports = {
   initializePayment,
   verifyPayment,
   bookController,
-  cancelBooking
+  cancelBooking,
+  allTransactionController,
+  pendingPayoutController,
+  payoutStatusUpdateController,
+  completePayoutController
 };

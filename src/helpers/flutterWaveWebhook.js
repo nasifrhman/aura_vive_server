@@ -1,7 +1,6 @@
 const Transaction = require("../modules/Transaction/transaction.model");
 const bookingModel = require("../modules/Booking/booking.model");
 const serviceModel = require("../modules/Service/service.model");
-const userModel = require("../modules/User/user.model");
 
 const flutterwaveWebhook = async (req, res) => {
   try {
@@ -39,19 +38,7 @@ const flutterwaveWebhook = async (req, res) => {
 
     transaction.meta = payment;
 
-    // fallback partner snapshot
-    if (!transaction.account_name || !transaction.account_number) {
-      const partnerData = await userModel.findById(transaction.partner);
 
-      if (partnerData) {
-        transaction.account_name = partnerData.account_name;
-        transaction.account_number = partnerData.account_number;
-      }
-    }
-
-    // ======================
-    // CREATE BOOKING
-    // ======================
     if (transaction.booking_data) {
 
       const data = transaction.booking_data;
@@ -85,9 +72,6 @@ const flutterwaveWebhook = async (req, res) => {
       transaction.booking = booking._id;
     }
 
-    // ======================
-    // FINAL STATUS UPDATE
-    // ======================
     transaction.payment_status = "successful";
 
     await transaction.save();

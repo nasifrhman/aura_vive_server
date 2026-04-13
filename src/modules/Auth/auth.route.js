@@ -8,7 +8,7 @@ const uploadUsers = userFileUploadMiddleware(UPLOADS_FOLDER_USERS);
 const convertHeicToPng = require('../../middlewares/converter');
 const ensureUploadFolderExists = require('../../helpers/fileExists');
 const parseData = require('../../middlewares/parseData');
-const { localAuth, userDetailsByID, forgetPassword, resendOTP, resetPassword, changePassword, updateProfile, otpVerification, signUp, partnerProfileController, myDocumentsController, otpVerificationForPartner, createPartnerController, partnerSignUpController, allUserController, deleteAccountController } = require("./auth.controller");
+const { localAuth, userDetailsByID, forgetPassword, resendOTP, resetPassword, changePassword, updateProfile, otpVerification, signUp, partnerProfileController, myDocumentsController, otpVerificationForPartner, createPartnerController, partnerSignUpController, allUserController, deleteAccountController, allPartnerController } = require("./auth.controller");
 ensureUploadFolderExists(UPLOADS_FOLDER_USERS);
 
 
@@ -34,6 +34,7 @@ router.post("/signin", localAuth);
 router.get('/my-profile', auth(['admin', 'hr', 'user', 'partner']), userDetailsByID);
 router.get('/my-documents', auth(['admin', 'hr', 'user', 'partner']), myDocumentsController);
 router.get('/partner-profile', auth(['partner', 'admin']), partnerProfileController);
+router.get('/all-partner', auth(['partner', 'admin']), allPartnerController);
 router.post(
   "/sign-up",
   uploadUsers.fields([

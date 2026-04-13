@@ -7,10 +7,50 @@ const addbankService = async (data) => {
 const getAllbankService = async (options) => {
     const { page = 1, limit = 10 } = options;
     const skip = (page - 1) * limit;
-    const result = await bankModel.find().skip(skip).limit(limit);
+
+    const result = await bankModel.aggregate([
+        { $skip: skip },
+        { $limit: limit },
+        {
+            $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "userData"
+            }
+        },
+        {
+            $unwind: {
+                path: "$userData",
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
+            $project: {
+                bank_name: 1,
+                account_name: 1,
+                account_number: 1,
+                bankNotListed: 1,
+                createdAt : 1,
+                requestedBy: "$userData.fullName",
+                email : "$userData.email"
+            }
+        }
+    ]);
+
     const totalResults = await bankModel.countDocuments();
-    return { result, pagination: { totalResults, totalPages: Math.ceil(totalResults / limit), currentPage: page, limit } };
-}
+
+    return {
+        result,
+        pagination: {
+            totalResults,
+            totalPages: Math.ceil(totalResults / limit),
+            currentPage: page,
+            limit
+        }
+    };
+};
+
 
 const getMybankService = async (user) => {
     return await bankModel.findOne({user: user});

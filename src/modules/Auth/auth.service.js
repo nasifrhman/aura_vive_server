@@ -131,6 +131,11 @@ const updateUserById = async (id, data) => {
 };
 
 
+const allPartnersService = async () => {
+  return await User.find({ role: 'partner' }).select('_id fullName image');
+}
+
+
 const profileByIdService = async (userId) => {
   const user = await userModel.findById(userId);
 
@@ -301,5 +306,6 @@ module.exports = {
   profileByIdService,
   partnerProfileService,
   allUserService,
-  deleteAccountService
+  deleteAccountService,
+  allPartnersService
 };

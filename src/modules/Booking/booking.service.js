@@ -116,7 +116,7 @@ const approveBookingService = async (id) => {
 }
 
 const assignStuffService = async (id, stuff) => {
-    return await bookingModel.findByIdAndUpdate(id, { assignedTo: stuff }, { new: true });
+    return await bookingModel.findByIdAndUpdate(id, { assignedTo: stuff, status: "approved" }, { new: true });
 }
 
 const completeBookingService = async (id) => {

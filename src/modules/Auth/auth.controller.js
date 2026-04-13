@@ -5,7 +5,8 @@ const { sendOTP, verifyOTP, deleteOTP, checkOTPByEmail, checkOTPService } = requ
 const { login, getUserByEmail, addUser, updateUserById, profileByIdService, getUserById, getUserByPhoneNumber,
   partnerProfileService, 
   allUserService,
-  deleteAccountService} = require("./auth.service");
+  deleteAccountService,
+  allPartnersService} = require("./auth.service");
 const { addToken, verifyToken, deleteToken } = require("../Token/token.service");
 const jwt = require("jsonwebtoken");
 const { default: status } = require("http-status");
@@ -881,8 +882,14 @@ const partnerProfileController = catchAsync(async (req, res) => {
 })
 
 
+const allPartnerController = catchAsync(async (req, res) => {
+  const allPartners = await allPartnersService();
+  return res.status(status.OK).json(response({ statusCode: status.OK, message: "user details", type: "user", data: allPartners, status: "OK" }));
+})
+
 module.exports = {
   localAuth,
+  allPartnerController,
   signUp,
   otpVerification,
   forgetPassword,

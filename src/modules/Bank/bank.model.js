@@ -6,6 +6,7 @@ const bankSchema = new mongoose.Schema({
     account_name: { type: String, default: false },
     account_number: { type: String, required: true },
     bankNotListed: { type: Boolean, default: false },
+    isManual: { type: Boolean, default: false },
 },
     {
         timestamps: true

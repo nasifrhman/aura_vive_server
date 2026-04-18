@@ -10,7 +10,7 @@ const editPromoService = async (id, data) => {
 }
 
 const deletePromoService = async (id) => {
-    return await promoModel.findByIdAndUpdate(id, { isDeleted: true }, { new: true });
+    return await promoModel.findByIdAndDelete(id);
 }
 
 const getPartnerPromoService = async (user, option) => {

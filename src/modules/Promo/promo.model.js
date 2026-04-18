@@ -10,11 +10,11 @@ const promoSchema = new mongoose.Schema({
     validForm : { type: Date, required: false },
     validTo : { type: Date, required: false },    
     eligiblity : { type: String, enum: ['all-users', 'new-users', 'employees'], required: false },
-    status: { type: String, enum : ['active', 'paused', 'expired', 'scheduled'], default: 'paused' },
+    status: { type: String, enum : ['active', 'paused', 'expired', 'scheduled'], default: 'active' },
     image: { type: String, required: false },
     createdBy : { type: String, required: true, enum: ['admin', 'partner'] },
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-}, { timestamps: false });
+}, { timestamps: true });
 
 
 module.exports = mongoose.model("Promo", promoSchema);

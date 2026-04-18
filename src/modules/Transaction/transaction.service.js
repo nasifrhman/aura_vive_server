@@ -120,6 +120,7 @@ const getAllTransactions = async (option = {}) => {
       $project: {
         _id: 0,
         amount: 1,
+        booking:1,
         payment_method: 1,
         createdAt: 1,
         partnerName: "$partnerInfo.fullName",

@@ -23,6 +23,7 @@ const bookController = catchAsync(async (req, res) => {
     totalPrice,
     addons,
   } = req.body;
+  console.log(req.body)
 
   const userId = req.User._id;
   const user = await getUserById(userId);

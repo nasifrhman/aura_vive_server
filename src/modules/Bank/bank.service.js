@@ -1,8 +1,31 @@
+const ApiError = require("../../helpers/ApiError");
 const bankModel = require("./bank.model");
 
-const addbankService = async (data) => {
+const upsertBankService = async (data) => {
+
+    if (data.isManual === false) {
+
+        const existingAutoBank = await bankModel.findOne({
+            user: data.user,
+            isManual: false
+        });
+
+        // If auto bank exists → update it
+        if (existingAutoBank) {
+            return await bankModel.findByIdAndUpdate(
+                existingAutoBank._id,
+                data,
+                { new: true }
+            );
+        }
+
+        // If not exists → create
+        return await bankModel.create(data);
+    }
+
     return await bankModel.create(data);
-}
+};
+
 
 const getAllbankService = async (options) => {
     const { page = 1, limit = 10 } = options;
@@ -31,9 +54,9 @@ const getAllbankService = async (options) => {
                 account_name: 1,
                 account_number: 1,
                 bankNotListed: 1,
-                createdAt : 1,
+                createdAt: 1,
                 requestedBy: "$userData.fullName",
-                email : "$userData.email"
+                email: "$userData.email"
             }
         }
     ]);
@@ -53,7 +76,7 @@ const getAllbankService = async (options) => {
 
 
 const getMybankService = async (user) => {
-    return await bankModel.findOne({user: user});
+    return await bankModel.findOne({ user: user, isManual: false });
 }
 
 const deleteBankService = async (id) => {
@@ -61,8 +84,8 @@ const deleteBankService = async (id) => {
 }
 
 module.exports = {
-    addbankService,
+    upsertBankService,
     getAllbankService,
     getMybankService,
-    deleteBankService
+    deleteBankService,
 }

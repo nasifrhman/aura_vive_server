@@ -1,5 +1,5 @@
 const catchAsync = require("../../helpers/catchAsync");
-const { addFeedback, getFeedbackService, getFeedbackForAService, ratingForServiceService } = require("./feedback.service");
+const { addFeedback, getFeedbackService, getFeedbackForAService, ratingForServiceService, getMyFeedbackService, replyService } = require("./feedback.service");
 const response = require("../../helpers/response");
 const { default: status } = require("http-status");
 
@@ -10,9 +10,13 @@ const addFeedbackController = catchAsync(async (req, res) => {
     return res.status(status.CREATED).json(response({ status: "success", statusCode: status.CREATED, type: "feedback", message:"feedback-added", data: feedback }));
 });
 
+const replyController = catchAsync(async (req, res) => {
+    const feedback = await replyService(req.body);
+    return res.status(status.CREATED).json(response({ status: "success", statusCode: status.CREATED, type: "feedback", message:"reply-added" }));
+});
 
 
-const getFeedbackController = catchAsync(async (req, res) => {
+const getMyFeedbackController = catchAsync(async (req, res) => {
   const options = {
     page: Number(req.query.page) || 1,
     limit: Number(req.query.limit) || 10,
@@ -20,7 +24,7 @@ const getFeedbackController = catchAsync(async (req, res) => {
     date: req.query.date      
   };
 
-  const feedback = await getFeedbackService(options);
+  const feedback = await getMyFeedbackService(req.User._id, options);
   return res.status(status.OK).json(
     response({
       status: "success",
@@ -36,4 +40,4 @@ const getFeedbackController = catchAsync(async (req, res) => {
 
 
 
-module.exports = { addFeedbackController, getFeedbackController };
+module.exports = { addFeedbackController, getMyFeedbackController, replyController };

@@ -1,4 +1,4 @@
-const { addBankService, getBankService, deleteBankService, addbankService, getMybankService } = require("./bank.service");
+const { addBankService, getBankService, deleteBankService, addbankService, getMybankService, editbankService, upsertBankService } = require("./bank.service");
 const { status } = require("http-status");
 const response = require("../../helpers/response");
 const catchAsync = require("../../helpers/catchAsync");
@@ -6,9 +6,11 @@ const { getAllbankService } = require("./bank.service");
 
 const addBankController = catchAsync(async (req, res) => {
     req.body.user = req.User._id;
-    const newBank = await addbankService(req.body);
+    const newBank = await upsertBankService(req.body);
     return res.status(status.CREATED).json(response({ status: 'success', statusCode: status.CREATED, type: "Bank", message: "Bank added successfully", data: newBank, }));
 })
+
+
 
 const getMybankController = catchAsync(async (req, res) => {
     const result = await getMybankService(req.User._id);

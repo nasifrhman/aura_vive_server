@@ -14,7 +14,7 @@ const staticContentRoutes = require('../modules/StaticContent/staticContent.rout
 const serviceRoutes = require('../modules/Service/service.route');
 const availabilityRoutes = require('../modules/Availability/availability.route');
 const reportRoutes = require('../modules/Report/report.route');
-// const feedbackRoutes = require('../modules/FeedBack/feedback.route');
+const feedbackRoutes = require('../modules/FeedBack/feedback.route');
 const promoRoutes = require('../modules/Promo/promo.route');
 const commissionRoutes = require('../modules/Commission/commission.route');
 const bookingRoutes = require('../modules/Booking/booking.route');
@@ -87,10 +87,10 @@ const moduleRoutes = [
     path: '/report',
     route: reportRoutes
   },
-  // {
-  //   path : '/feedback',
-  //   route : feedbackRoutes
-  // },
+  {
+    path : '/feedback',
+    route : feedbackRoutes
+  },
   {
     path : '/promo',
     route: promoRoutes

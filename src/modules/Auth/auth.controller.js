@@ -29,8 +29,8 @@ const localAuth = catchAsync(async (req, res) => {
 
   const user = await login(identifier, type, password);
   user.isLoginToken = true;
-  console.log({ user });
-  await user.save();
+  // console.log({ user });
+  // await user.save();
   let admin;
   if (user.role === 'admin' || user.role === 'hr') {
     admin = await getAdminByUserId(user._id);
@@ -578,7 +578,7 @@ const deleteAccountController = catchAsync(async (req, res) => {
 
 
 const changePassword = catchAsync(async (req, res) => {
-  console.log("changePassword controller:: ", req.User);
+  // console.log("changePassword controller:: ", req.User);
   let receiverType = "email";
   let createdBy = req.User.email;
   if (req.User.role === "user") {
@@ -591,6 +591,7 @@ const changePassword = catchAsync(async (req, res) => {
     return res.status(status.BAD_REQUEST).json(response({ status: "Error", statusCode: status.BAD_REQUEST, type: "user", message: 'old password is incorrect' }));
   }
   verifyUser.password = newPassword;
+  verifyUser.isLoginToken = false;
   await verifyUser.save();
   return res.status(status.OK).json(response({ status: "OK", statusCode: status.OK, type: "user", message: 'password changed' })
   );

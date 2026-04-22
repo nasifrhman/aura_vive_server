@@ -27,8 +27,7 @@ const auth = (userRoles) => {
     if (userRoles && !userRoles.includes(decodedData.role)) {
       throw new ApiError(status.UNAUTHORIZED, 'You are not authorized');
     }
-
-    if (user.isLoginToken === false)
+    if (decodedData.isLoginToken === false)
       throw new ApiError(status.FORBIDDEN, 'You are not authorized');
     req.User = decodedData;
     console.log("Decoded User in auth middleware:", req.User);

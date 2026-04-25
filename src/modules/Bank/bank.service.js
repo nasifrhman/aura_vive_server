@@ -27,11 +27,13 @@ const upsertBankService = async (data) => {
 };
 
 
-const getAllbankService = async (options) => {
+const getAllRequestedbankService = async (options) => {
     const { page = 1, limit = 10 } = options;
     const skip = (page - 1) * limit;
 
     const result = await bankModel.aggregate([
+        { $match: { isManual: true } },
+        { $sort: { createdAt: -1 } },
         { $skip: skip },
         { $limit: limit },
         {
@@ -85,7 +87,7 @@ const deleteBankService = async (id) => {
 
 module.exports = {
     upsertBankService,
-    getAllbankService,
+    getAllRequestedbankService,
     getMybankService,
     deleteBankService,
 }

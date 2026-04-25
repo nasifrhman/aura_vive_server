@@ -1,4 +1,5 @@
 const { addUser } = require("../Auth/auth.service");
+const userModel = require("../User/user.model");
 const { userDeleteByIdService } = require("../User/user.service");
 const adminModel = require("./admin.model");
 
@@ -19,7 +20,7 @@ const addAdminService = async (data) => {
 
 
 const deleteAdminService = async (id) => {
-    const user = await userDeleteByIdService(id);
+    const user = await userModel.findOneAndUpdate({ _id: id }, { isDeleted: true }, { new: true });
     user && await adminModel.findOneAndDelete({ user: id });
     return user;
 }
@@ -90,10 +91,32 @@ const getAdminByUserId = async (id) => {
     return adminModel.findOne({ user: id })
 }
 
+const suspendAdminService = async (id) => {
+    const user = await userModel.findById(id);
+    if (!user) {
+        throw new ApiError(404, 'User not found');
+    }
+    user.isBan = true;
+    await user.save();
+    return user;
+};
+
+const activateAdminService = async (id) => {
+    const user = await userModel.findById(id);
+    if (!user) {
+        throw new ApiError(404, 'User not found');
+    }
+    user.isBan = false;
+    await user.save();
+    return user;
+};
+
 module.exports = {
     addAdminService,
     getAdminByUserId,
     editAdminService,
     deleteAdminService,
-    allAdminService
+    allAdminService,
+    suspendAdminService,
+    activateAdminService
 }

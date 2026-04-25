@@ -22,7 +22,7 @@ const bookingSchema = new mongoose.Schema({
         noOfSessions: { type: Number, required: false },
         validity: { type: Number, required: false },
     },
-    paymentMethod: { type: String, enum: ['digital-payment', 'cash'] },
+    paymentMethod: { type: String, enum: ['digital-payment', 'cash', 'card'] },
     transaction: { type: mongoose.Schema.Types.ObjectId, ref: "Transaction" },
     status: { type: String, enum: ['pending', 'approved', 'cancelled', 'completed'], default: 'pending' },
     paymentStatus: { type: String, enum: ['pending', 'paid', 'failed', 'refunded'], default: 'pending' },

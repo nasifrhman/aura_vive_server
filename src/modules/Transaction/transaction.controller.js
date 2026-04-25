@@ -4,7 +4,7 @@ const catchAsync = require("../../helpers/catchAsync");
 const bookingModel = require("../Booking/booking.model");
 const { getUserById } = require("../Auth/auth.service");
 const userModel = require("../User/user.model");
-const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService, getAllPayoutService } = require("./transaction.service");
+const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService, getAllPayoutService, getPartnerMonthlySummaryService, comnpletePayoutService, holdPayoutService, getPartnerMonthlyCompletedPayoutService } = require("./transaction.service");
 const { default: status } = require("http-status");
 const response = require("../../helpers/response");
 const generate4DigitPin = require("../../helpers/generatepin");
@@ -222,31 +222,31 @@ const allTransactionController = catchAsync(async (req, res) => {
 
 
 
-const pendingPayoutController = catchAsync(async (req, res) => {
+// const pendingPayoutController = catchAsync(async (req, res) => {
 
-  const option = {
-    page: Number(req.query.page) || 1,
-    limit: Number(req.query.limit) || 10,
+//   const option = {
+//     page: Number(req.query.page) || 1,
+//     limit: Number(req.query.limit) || 10,
 
-    month: req.query.month ? Number(req.query.month) : undefined,
-    year: req.query.year ? Number(req.query.year) : undefined,
+//     month: req.query.month ? Number(req.query.month) : undefined,
+//     year: req.query.year ? Number(req.query.year) : undefined,
 
-    status: req.query.status,
-    search: req.query.search,
-  };
+//     status: req.query.status,
+//     search: req.query.search,
+//   };
 
-  const transactions = await getPendingPayoutService(option);
+//   const transactions = await getPendingPayoutService(option);
 
-  return res.status(status.OK).json(
-    response({
-      status: 'success',
-      statusCode: status.OK,
-      type: "Transaction",
-      message: "Transaction fetched successfully",
-      data: transactions,
-    })
-  );
-});
+//   return res.status(status.OK).json(
+//     response({
+//       status: 'success',
+//       statusCode: status.OK,
+//       type: "Transaction",
+//       message: "Transaction fetched successfully",
+//       data: transactions,
+//     })
+//   );
+// });
 
 
 
@@ -279,7 +279,8 @@ const allPayoutController = catchAsync(async (req, res) => {
 
 
 
-const completePayoutController = catchAsync(async (req, res) => {
+
+const partnerMonthlySummaryController = catchAsync(async (req, res) => {
 
   const option = {
     page: Number(req.query.page) || 1,
@@ -288,18 +289,17 @@ const completePayoutController = catchAsync(async (req, res) => {
     month: req.query.month ? Number(req.query.month) : undefined,
     year: req.query.year ? Number(req.query.year) : undefined,
 
-    status: req.query.status,
     search: req.query.search,
   };
 
-  const transactions = await getcompletePayoutService(option);
+  const transactions = await getPartnerMonthlySummaryService(option);
 
   return res.status(status.OK).json(
     response({
       status: 'success',
       statusCode: status.OK,
       type: "Transaction",
-      message: "Transaction fetched successfully",
+      message: "Partner monthly summary fetched successfully",
       data: transactions,
     })
   );
@@ -307,11 +307,11 @@ const completePayoutController = catchAsync(async (req, res) => {
 
 
 
-const payoutStatusUpdateController = catchAsync(async (req, res) => {
+const holdPayoutController = catchAsync(async (req, res) => {
 
   const { partnerId, month, year, status } = req.body;
 
-  const result = await payoutStatusUpdateService({
+  const result = await holdPayoutService({
     partnerId,
     month,
     year,
@@ -323,6 +323,53 @@ const payoutStatusUpdateController = catchAsync(async (req, res) => {
       status: "success",
       message: "Monthly payout completed",
       data: result
+    })
+  );
+});
+
+
+
+const doCompletePayoutController = catchAsync(async (req, res) => {
+
+  const { partnerId, month, year, status } = req.body;
+
+  const result = await comnpletePayoutService({
+    partnerId,
+    month,
+    year,
+    status
+  });
+
+  return res.status(200).json(
+    response({
+      status: "success",
+      message: "Monthly payout completed",
+      data: result
+    })
+  );
+});
+
+
+
+const partnerMonthlyCompletedPayoutController = catchAsync(async (req, res) => {
+
+  const option = {
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 10,
+
+    month: req.query.month ? Number(req.query.month) : undefined,
+    year: req.query.year ? Number(req.query.year) : undefined,
+  };
+
+  const transactions = await getPartnerMonthlyCompletedPayoutService(option);
+
+  return res.status(status.OK).json(
+    response({
+      status: 'success',
+      statusCode: status.OK,
+      type: "Transaction",
+      message: "Partner monthly completed payout fetched successfully",
+      data: transactions,
     })
   );
 });
@@ -383,8 +430,10 @@ module.exports = {
   bookController,
   cancelBooking,
   allTransactionController,
-  pendingPayoutController,
-  payoutStatusUpdateController,
-  completePayoutController,
-  allPayoutController
+  // pendingPayoutController,
+  holdPayoutController,
+  doCompletePayoutController,
+  allPayoutController,
+  partnerMonthlySummaryController,
+  partnerMonthlyCompletedPayoutController
 };

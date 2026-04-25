@@ -8,9 +8,12 @@ const {
   pendingPayoutController,
   statusUpdateController,
   completeMonthlyPayoutController,
-  completePayoutController,
   payoutStatusUpdateController,
   allPayoutController,
+  partnerMonthlySummaryController,
+  holdPayoutController,
+  doCompletePayoutController,
+  partnerMonthlyCompletedPayoutController,
 } = require("./transaction.controller");
 const { auth } = require("../../middlewares/auth");
 const { default: status } = require("http-status");
@@ -19,12 +22,13 @@ const router = express.Router();
 
 
 router.patch("/cancel/:bookingId", auth(['user']), cancelBooking);
-router.patch("/status-update", payoutStatusUpdateController);
+router.patch("/hold", holdPayoutController);
+router.patch("/complete", doCompletePayoutController);
 router.post("/book", auth(['user']), bookController)
 router.post("/", initializePayment);
 router.get("/all-transaction", allTransactionController);
-router.get("/pending-payout", pendingPayoutController);
 router.get("/all-payout", allPayoutController);
-router.get("/complete-payout", completePayoutController);
+router.get("/pending-payout", partnerMonthlySummaryController);
+router.get("/complete-payout", partnerMonthlyCompletedPayoutController);
 
 module.exports = router;

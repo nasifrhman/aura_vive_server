@@ -59,6 +59,8 @@ const transactionSchema = new mongoose.Schema(
       default: "hold",
     },
 
+    payout_completed_at: Date,
+
   },
   { timestamps: true }
 );

@@ -607,9 +607,11 @@ const allBookingService = async (option) => {
     const skip = (page - 1) * limit;
 
     const matchStage = {
-        status: status,
         paymentStatus: "paid"
     };
+    if(status){
+        matchStage.status = status
+    }
 
     if (isOneTime !== undefined) {
         matchStage.isOneTime = isOneTime === "true";

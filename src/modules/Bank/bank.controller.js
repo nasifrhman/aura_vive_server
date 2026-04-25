@@ -1,4 +1,4 @@
-const { addBankService, getBankService, deleteBankService, addbankService, getMybankService, editbankService, upsertBankService } = require("./bank.service");
+const { addBankService, getBankService, deleteBankService, addbankService, getMybankService, editbankService, upsertBankService, getAllRequestedbankService } = require("./bank.service");
 const { status } = require("http-status");
 const response = require("../../helpers/response");
 const catchAsync = require("../../helpers/catchAsync");
@@ -17,12 +17,12 @@ const getMybankController = catchAsync(async (req, res) => {
     return res.status(status.OK).json(response({ status: 'success', statusCode: status.OK, type: "Bank", message: "Bank fetched successfully", data: result, }));
 })
 
-const getAllbankController = catchAsync(async (req, res) => {
+const getAllRequestedbankController = catchAsync(async (req, res) => {
     const options = {
         page: Number(req.query.page) || 1,
         limit: Number(req.query.limit) || 10
     }
-    const result = await getAllbankService(options);
+    const result = await getAllRequestedbankService(options);
     return res.status(status.OK).json(response({ status: 'success', statusCode: status.OK, type: "Bank", message: "Bank fetched successfully", data: result, }));
 })
 
@@ -33,4 +33,4 @@ const deleteBankController = catchAsync(async (req, res) => {
 })
 
 
-module.exports = { addBankController, getMybankController, getAllbankController, deleteBankController }
+module.exports = { addBankController, getMybankController, getAllRequestedbankController, deleteBankController }

@@ -1,6 +1,6 @@
 const { default: status } = require("http-status");
 const catchAsync = require("../../helpers/catchAsync");
-const { addAdminService, allAdminService, editAdminService, deleteAdminService } = require("./admin.service");
+const { addAdminService, allAdminService, editAdminService, deleteAdminService, suspendAdminService, activateAdminService } = require("./admin.service");
 const response = require("../../helpers/response");
 const ApiError = require("../../helpers/ApiError");
 const { getUserByEmail } = require("../Auth/auth.service");
@@ -40,10 +40,24 @@ const allAdminController = catchAsync(async(req , res) => {
 })
 
 
+const suspendAdminController = catchAsync(async(req , res) => {
+    const result = await suspendAdminService(req.params.userId);
+    return res.status(status.OK).json(response({status: 'success', statusCode: status.OK, message: 'admin suspended', type: 'admin', data: result}))
+})
+
+
+const activateAdminController = catchAsync(async(req , res) => {
+    const result = await activateAdminService(req.params.userId);
+    return res.status(status.OK).json(response({status: 'success', statusCode: status.OK, message: 'admin activated', type: 'admin', data: result}))
+})
+
+
 
 module.exports = {
     addAdminController,
     editAdminController,
     deleteAdminController,
-    allAdminController
+    allAdminController,
+    suspendAdminController,
+    activateAdminController
 }

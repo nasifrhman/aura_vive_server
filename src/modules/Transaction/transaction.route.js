@@ -10,6 +10,7 @@ const {
   completeMonthlyPayoutController,
   completePayoutController,
   payoutStatusUpdateController,
+  allPayoutController,
 } = require("./transaction.controller");
 const { auth } = require("../../middlewares/auth");
 const { default: status } = require("http-status");
@@ -23,6 +24,7 @@ router.post("/book", auth(['user']), bookController)
 router.post("/", initializePayment);
 router.get("/all-transaction", allTransactionController);
 router.get("/pending-payout", pendingPayoutController);
+router.get("/all-payout", allPayoutController);
 router.get("/complete-payout", completePayoutController);
 
 module.exports = router;

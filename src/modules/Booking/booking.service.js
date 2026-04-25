@@ -361,6 +361,20 @@ const bookingDetailsAdminEndService = async (id) => {
             }
         },
         {
+            $lookup: {
+                from: 'feedbacks',
+                localField: '_id',
+                foreignField: 'service',
+                as: 'feedbackData'
+            }
+        },
+        {
+            $unwind: {
+                path: '$feedbackData',
+                preserveNullAndEmptyArrays: true
+            }
+        },
+        {
             $project: {
                 bookingId: '$_id',
                 serviceName: '$serviceData.name',
@@ -374,8 +388,7 @@ const bookingDetailsAdminEndService = async (id) => {
                 servicefee: '$serviceData.servicefee',
                 duration: '$serviceData.duration',
                 totalPrice: 1,
-                rating: 1,
-                review: 1,
+                review: "$feedbackData.text",
                 sessionLeft: 1,
                 date: 1,
                 pin: 1,

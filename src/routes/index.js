@@ -5,7 +5,6 @@ const fqRoutes = require('../modules/F&Q/fq.route');
 const branchRoutes = require('../modules/Branch/branch.route');
 const departmentRoutes = require('../modules/Department/department.route');
 const employeerRoutes = require('../modules/Employer/employer.route');
-const userRoutes = require('../modules/User/user.route');
 const employeeRoutes = require('../modules/Employee/employee.route');
 const allocateRoutes = require('../modules/Allocate/allocate.route');
 const categoryRoutes = require('../modules/Category/category.route');
@@ -24,6 +23,8 @@ const adminRoutes = require('../modules/Admin/admin.route');
 const transactionRoutes = require('../modules/Transaction/transaction.route');
 const homeRoutes = require('../modules/Home/home.route');
 const bankRoutes = require('../modules/Bank/bank.route');
+const userRoutes = require('../modules/User/user.route');
+const staffRoutes = require('../modules/Staffs/staffs.route');
 
 
 const moduleRoutes = [
@@ -104,6 +105,10 @@ const moduleRoutes = [
     route: bookingRoutes
   },
   {
+    path : '/users',
+    route: userRoutes
+  },
+  {
     path : '/favorite',
     route: favouriteRoutes
   },
@@ -122,6 +127,10 @@ const moduleRoutes = [
   {
     path : '/bank',
     route : bankRoutes
+  },
+  {
+    path: '/staff',
+    route: staffRoutes
   }
 ];
 

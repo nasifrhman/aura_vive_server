@@ -4,7 +4,7 @@ const catchAsync = require("../../helpers/catchAsync");
 const bookingModel = require("../Booking/booking.model");
 const { getUserById } = require("../Auth/auth.service");
 const userModel = require("../User/user.model");
-const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService } = require("./transaction.service");
+const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService, getAllPayoutService } = require("./transaction.service");
 const { default: status } = require("http-status");
 const response = require("../../helpers/response");
 const generate4DigitPin = require("../../helpers/generatepin");
@@ -248,6 +248,37 @@ const pendingPayoutController = catchAsync(async (req, res) => {
   );
 });
 
+
+
+
+const allPayoutController = catchAsync(async (req, res) => {
+
+  const option = {
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 10,
+
+    month: req.query.month ? Number(req.query.month) : undefined,
+    year: req.query.year ? Number(req.query.year) : undefined,
+
+    status: req.query.status,
+    search: req.query.search,
+  };
+
+  const transactions = await getAllPayoutService(option);
+
+  return res.status(status.OK).json(
+    response({
+      status: 'success',
+      statusCode: status.OK,
+      type: "Transaction",
+      message: "Transaction fetched successfully",
+      data: transactions,
+    })
+  );
+});
+
+
+
 const completePayoutController = catchAsync(async (req, res) => {
 
   const option = {
@@ -354,5 +385,6 @@ module.exports = {
   allTransactionController,
   pendingPayoutController,
   payoutStatusUpdateController,
-  completePayoutController
+  completePayoutController,
+  allPayoutController
 };

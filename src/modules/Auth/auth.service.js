@@ -269,6 +269,7 @@ const allUserService = async (options) => {
               bookingCompleted: 1,
               employer: '$companyData.companyName',
               totalRevenue: 1,
+              digitalWallet: 1,
               status: 1,
               createdAt: 1,
             },

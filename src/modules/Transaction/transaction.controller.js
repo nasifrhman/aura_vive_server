@@ -4,10 +4,11 @@ const catchAsync = require("../../helpers/catchAsync");
 const bookingModel = require("../Booking/booking.model");
 const { getUserById } = require("../Auth/auth.service");
 const userModel = require("../User/user.model");
-const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService, getAllPayoutService, getPartnerMonthlySummaryService, comnpletePayoutService, holdPayoutService, getPartnerMonthlyCompletedPayoutService } = require("./transaction.service");
+const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService, getPartnerMonthlySummaryService, comnpletePayoutService, holdPayoutService, getPartnerMonthlyCompletedPayoutService, getAllPayoutService, getPlatformEarningTransactionsService } = require("./transaction.service");
 const { default: status } = require("http-status");
 const response = require("../../helpers/response");
 const generate4DigitPin = require("../../helpers/generatepin");
+const { search } = require("./transaction.route");
 
 
 
@@ -44,8 +45,8 @@ const bookController = catchAsync(async (req, res) => {
       message: "Partner not found",
     });
   }
-  
-    const pin = generate4DigitPin();
+
+  const pin = generate4DigitPin();
 
   // ✅ Create Transaction
   await Transaction.create({
@@ -191,6 +192,36 @@ const verifyPayment = async (req, res) => {
 
   res.send("Payment verification complete");
 };
+
+
+const earningController = catchAsync(async (req, res) => {
+  const {
+    page,
+    limit,
+    month,
+    year,
+    search,
+    paymentType,
+    role
+  } = req.query;
+
+  const result = await getPlatformEarningTransactionsService({
+    page,
+    limit,
+    month,
+    year,
+    search,
+    paymentType,
+    role
+  });
+
+  return res.status(200).json({
+    success: true,
+    message: "Platform earnings fetched successfully",
+    data: result.result,
+    pagination: result.pagination
+  });
+})
 
 
 const allTransactionController = catchAsync(async (req, res) => {
@@ -359,6 +390,7 @@ const partnerMonthlyCompletedPayoutController = catchAsync(async (req, res) => {
 
     month: req.query.month ? Number(req.query.month) : undefined,
     year: req.query.year ? Number(req.query.year) : undefined,
+    search: req.query.search,
   };
 
   const transactions = await getPartnerMonthlyCompletedPayoutService(option);
@@ -430,7 +462,7 @@ module.exports = {
   bookController,
   cancelBooking,
   allTransactionController,
-  // pendingPayoutController,
+  earningController,
   holdPayoutController,
   doCompletePayoutController,
   allPayoutController,

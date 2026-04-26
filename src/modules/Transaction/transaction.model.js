@@ -16,13 +16,6 @@ const transactionSchema = new mongoose.Schema(
     amount: Number,
     currency: String,
 
-    // status: {
-    //   type: String,
-    //   enum: ["pending", "successful", "failed", "refunded"],
-    //   default: "pending",
-    // },
-
-    payment_method: String,
     bank_name: String,
 
     booking: {
@@ -52,11 +45,20 @@ const transactionSchema = new mongoose.Schema(
       enum: ["pending", "successful", "failed", "refunded"],
       default: "pending",
     },
-
+    payment_method: {
+      type: String,
+      enum: ["card", "wallet", "transfer"],
+      default: "card",
+    },
     payout_status: {
       type: String,
       enum: ["pending", "hold", "completed"],
       default: "hold",
+    },
+
+    paymentType : {
+      type: String,
+      enum: ["credit"]
     },
 
     payout_completed_at: Date,

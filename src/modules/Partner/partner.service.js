@@ -328,8 +328,7 @@ const allPartnerService = async (options) => {
     const aggregation = [
         {
             $match: {
-                isDeleted: false,
-                isVerified: false
+                isDeleted: false
             },
         },
 

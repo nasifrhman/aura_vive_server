@@ -13,7 +13,6 @@ const transactionSchema = new mongoose.Schema(
 
     user_email: String,
 
-    amount: Number,
     currency: String,
 
     bank_name: String,

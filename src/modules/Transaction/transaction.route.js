@@ -15,6 +15,8 @@ const {
   doCompletePayoutController,
   partnerMonthlyCompletedPayoutController,
   earningController,
+  purchaseCreditController,
+  allPayoutOfAPartnerController,
 } = require("./transaction.controller");
 const { auth } = require("../../middlewares/auth");
 const { default: status } = require("http-status");
@@ -26,7 +28,9 @@ router.patch("/cancel/:bookingId", auth(['user']), cancelBooking);
 router.patch("/hold", holdPayoutController);
 router.patch("/complete", doCompletePayoutController);
 router.post("/book", auth(['user']), bookController)
+router.post("/purchase-credit", auth(['user', 'partner']), purchaseCreditController)
 router.post("/", initializePayment);
+router.get("/partner/all-payout",auth(['partner']), allPayoutOfAPartnerController);
 router.get("/all-transaction", allTransactionController);
 router.get("/earning", earningController);
 router.get("/all-payout", allPayoutController);

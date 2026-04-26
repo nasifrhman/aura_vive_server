@@ -186,6 +186,62 @@ const getAllTransactions = async (option = {}) => {
   };
 };
 
+
+
+const allPayoutOfAPartnerService = async (user, option = {}) => {
+
+  let {
+    page = 1,
+    limit = 10,
+  } = option;
+
+  page = Number(page);
+  limit = Number(limit);
+
+  const skip = (page - 1) * limit;
+
+  const matchStage = {
+    user: new mongoose.Types.ObjectId(user),
+  };
+
+  const [result, totalCount] = await Promise.all([
+
+    transactionModel.aggregate([
+      { $match: matchStage },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $project: {
+          _id: 0,
+          amount: "$net_amount",
+          gross_amount : 1,
+          commission: 1,
+          createdAt: 1,
+          transaction_id: 1
+        }
+      }
+    ]),
+
+    transactionModel.aggregate([
+      { $match: matchStage },
+      { $count: "total" },
+    ]),
+  ]);
+
+  const totalResults = totalCount[0]?.total || 0;
+
+  return {
+    result,
+    pagination: {
+      totalResults,
+      totalPages: Math.ceil(totalResults / limit),
+      currentPage: page,
+      limit,
+    },
+  };
+};
+
 const getPlatformEarningTransactionsService = async (option = {}) => {
 
   let {
@@ -1119,13 +1175,55 @@ const getPartnerMonthlyCompletedPayoutService = async (option = {}) => {
 };
 
 
+
+
+const comnpletePayoutService = async ({
+  partnerId,
+  month,
+  year,
+  status,
+}) => {
+
+  month = Number(month);
+  year = Number(year);
+
+  const startDate = new Date(year, month - 1, 1);
+  const endDate = new Date(year, month, 1);
+
+  const result = await transactionModel.updateMany(
+    {
+      partner: new mongoose.Types.ObjectId(partnerId),
+
+      payout_status: status,
+      payment_status: "successful",
+
+      createdAt: {
+        $gte: startDate,
+        $lt: endDate,
+      },
+    },
+    {
+      $set: {
+        payout_status: "completed",
+        payout_completed_at: new Date(),
+      },
+    }
+  );
+
+  return result;
+};
+
+
+
 module.exports = {
   getAllTransactions,
+  comnpletePayoutService,
   // getPendingPayoutService,
   holdPayoutService,
   getcompletePayoutService,
   getPartnerMonthlySummaryService,
   getPartnerMonthlyCompletedPayoutService,
   getAllPayoutService,
-  getPlatformEarningTransactionsService
+  getPlatformEarningTransactionsService,
+  allPayoutOfAPartnerService
 };

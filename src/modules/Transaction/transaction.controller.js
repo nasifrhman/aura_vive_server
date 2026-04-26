@@ -4,7 +4,7 @@ const catchAsync = require("../../helpers/catchAsync");
 const bookingModel = require("../Booking/booking.model");
 const { getUserById } = require("../Auth/auth.service");
 const userModel = require("../User/user.model");
-const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService, getPartnerMonthlySummaryService, comnpletePayoutService, holdPayoutService, getPartnerMonthlyCompletedPayoutService, getAllPayoutService, getPlatformEarningTransactionsService } = require("./transaction.service");
+const { getAllTransactions, getPendingPayoutService, getcompletePayoutService, payoutStatusUpdateService, getPartnerMonthlySummaryService, comnpletePayoutService, holdPayoutService, getPartnerMonthlyCompletedPayoutService, getAllPayoutService, getPlatformEarningTransactionsService, allPayoutOfAPartnerService } = require("./transaction.service");
 const { default: status } = require("http-status");
 const response = require("../../helpers/response");
 const generate4DigitPin = require("../../helpers/generatepin");
@@ -31,13 +31,11 @@ const bookController = catchAsync(async (req, res) => {
 
   const tx_ref = `txn_${Date.now()}_${userId}`;
 
-  // 🔹 Commission Calculation
   const commissionRate = 0.10; // 10%
   const grossAmount = Number(totalPrice);
   const commission = grossAmount * commissionRate;
   const netAmount = grossAmount - commission;
 
-  // 🔹 Get partner bank info
   const partnerData = await userModel.findById(partner);
 
   if (!partnerData) {
@@ -48,7 +46,6 @@ const bookController = catchAsync(async (req, res) => {
 
   const pin = generate4DigitPin();
 
-  // ✅ Create Transaction
   await Transaction.create({
     tx_ref,
     user: userId,
@@ -84,7 +81,6 @@ const bookController = catchAsync(async (req, res) => {
     },
   });
 
-  // 🔥 Flutterwave Init
   const response = await axios.post(
     "https://api.flutterwave.com/v3/payments",
     {
@@ -112,6 +108,73 @@ const bookController = catchAsync(async (req, res) => {
     tx_ref,
   });
 });
+
+
+
+
+
+const purchaseCreditController = catchAsync(async (req, res) => {
+
+  const {
+    amount
+  } = req.body;
+
+  const userId = req.User._id;
+  const user = await getUserById(userId);
+
+  const tx_ref = `txn_${Date.now()}_${userId}`;
+
+  const commissionRate = 0.10; // 10%
+  const grossAmount = Number(amount);
+  const commission = grossAmount * commissionRate;
+  const netAmount = grossAmount - commission;
+
+
+  await Transaction.create({
+    tx_ref,
+    user: userId,
+    user_email: user.email,
+
+    amount: grossAmount,
+    currency: "USD",
+
+    gross_amount: grossAmount,
+    commission,
+    net_amount: netAmount,
+
+    payout_status: "pending", 
+    paymentType: "credit"
+  });
+
+  const response = await axios.post(
+    "https://api.flutterwave.com/v3/payments",
+    {
+      tx_ref,
+      amount: grossAmount,
+      currency: "USD",
+      redirect_url: process.env.FLW_SUCCESS_URL,
+
+      payment_options: "card,banktransfer",
+
+      customer: {
+        email: user.email,
+        name: user.fullName,
+      },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${process.env.FLW_SECRET_KEY}`,
+      },
+    }
+  );
+
+  res.json({
+    paymentLink: response.data.data.link,
+    tx_ref,
+  });
+});
+
+
 
 
 
@@ -224,6 +287,8 @@ const earningController = catchAsync(async (req, res) => {
 })
 
 
+
+
 const allTransactionController = catchAsync(async (req, res) => {
 
   const option = {
@@ -238,6 +303,27 @@ const allTransactionController = catchAsync(async (req, res) => {
   };
 
   const transactions = await getAllTransactions(option);
+
+  return res.status(status.OK).json(
+    response({
+      status: 'success',
+      statusCode: status.OK,
+      type: "Transaction",
+      message: "Transaction fetched successfully",
+      data: transactions,
+    })
+  );
+});
+
+
+
+const allPayoutOfAPartnerController = catchAsync(async (req, res) => {
+  const option = {
+    page: Number(req.query.page) || 1,
+    limit: Number(req.query.limit) || 10,
+  };
+
+  const transactions = await allPayoutOfAPartnerService(req.User._id, option);
 
   return res.status(status.OK).json(
     response({
@@ -467,5 +553,7 @@ module.exports = {
   doCompletePayoutController,
   allPayoutController,
   partnerMonthlySummaryController,
-  partnerMonthlyCompletedPayoutController
+  partnerMonthlyCompletedPayoutController,
+  purchaseCreditController,
+  allPayoutOfAPartnerController
 };

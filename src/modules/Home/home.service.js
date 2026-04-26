@@ -207,7 +207,26 @@ const allNearestService = async (longitude, latitude, options) => {
           preserveNullAndEmptyArrays: true
         }
       },
-
+      {
+        $lookup: {
+          from: "users",
+          localField: "service.user",
+          foreignField: "_id",
+          as: "providerInfo"
+        }
+      },
+{
+        $unwind: {
+          path: "$providerInfo",
+          preserveNullAndEmptyArrays: true
+        }
+      },
+      {
+        $match: {
+          "service.isActive": true,
+          "service.isDeleted": false
+        }
+      },
       {
         $lookup: {
           from: "subcategories",
@@ -251,6 +270,7 @@ const allNearestService = async (longitude, latitude, options) => {
           ratingCount: "$service.ratingCount",
           sell: "$service.sell",
           subCategoryName: "$subCategory.name",
+          providerName : "$providerInfo.fullName",
           distance: { $round: ["$distance", 2] }
         }
       }
